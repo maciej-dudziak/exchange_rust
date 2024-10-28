@@ -1,18 +1,10 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Order {
     price: i32,
     timestamp: u64,
     quantity: i32,
     instrument: String,
 }
-
-// impl PartialEq for Order {
-//     fn eq(&self, other: &Self) -> bool {
-//         (self.price, self.timestamp) == (other.price, other.timestamp)
-//     }
-// }
-
-impl Eq for Order {}
 
 impl Ord for Order {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {

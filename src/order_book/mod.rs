@@ -25,7 +25,10 @@ impl OrderBook {
             }
         } else {
             // TODO match orders here
-            self.match_bids(&order);
+            let q = self.match_bids(&order);
+            if q < order.quantity {
+                self.resting_ask.push(Reverse(order));
+            }
         }
         // Avoid it here
         //self.match_orders();
@@ -36,7 +39,7 @@ impl OrderBook {
         while let Some(ask) = self.resting_ask.peek() {
             if ask.0.price <= bid.price {
                 let q = bid.quantity.min(ask.0.quantity);
-                println!("Matched {} shares of {} at ${}",q, bid.instrument, ask.0.price);
+                println!("Matched {} shares of {} at ${}", q, bid.instrument, ask.0.price);
                 
                 if q == ask.0.quantity {
                     // Filled resting order completely
@@ -54,13 +57,14 @@ impl OrderBook {
         return matched_quantity;
     }
 
-    fn match_bids(&mut self, ask: &Order) {
+    fn match_bids(&mut self, ask: &Order) -> i32 {
+        let mut matched_quantity: i32 = 0;
         while let Some(bid) = self.resting_bid.peek() {
             if bid.price >= ask.price {
-                let matched_quantity = ask.quantity.min(bid.quantity);
-                println!("Matched {} shares of {} at ${}",matched_quantity, bid.instrument, bid.price);
+                let q = ask.quantity.min(bid.quantity);
+                println!("Matched {} shares of {} at ${}", q, bid.instrument, bid.price);
                 
-                if matched_quantity == bid.quantity {
+                if q == bid.quantity {
                     // Filled resting order completely
                     self.resting_bid.pop();
                 }
@@ -68,13 +72,14 @@ impl OrderBook {
 
 
                 // Execute on quantity
+                matched_quantity += q;
             }
             else 
             {
                 break;   
             }
         }
-        return;
+        return matched_quantity;
     }
 }
 
@@ -91,6 +96,7 @@ mod tests {
         ob.add_order(Order::new(115, 3, 10, String::from("APPL")), false);
 
         ob.add_order(Order::new(99, 3, 10, String::from("APPL")), false);
+        ob.add_order(Order::new(111, 3, 10, String::from("APPL")), true);
 
         println!("OrderBook is {:?}", ob)
     }
